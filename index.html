@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#167d8d">
+  <meta name="description" content="Аксиома — интерактивная доска для учителя математики. Рисуйте, стройте фигуры, объясняйте и сохраняйте уроки.">
+  <title>Аксиома — математическая доска</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-select" viewBox="0 0 24 24"><path d="m5 3 14 10-7 1-4 7z"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 11V6a2 2 0 0 1 4 0v4-6a2 2 0 0 1 4 0v6-4a2 2 0 0 1 4 0v7c0 5-3 8-7 8h-1c-3 0-5-2-6-5l-3-5a2 2 0 0 1 3-2l2 2Z"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="m14 4 6 6M4 20l4-1L20 7a2 2 0 0 0-4-4L4 15zM4 15l5 4"/></symbol>
+    <symbol id="i-marker" viewBox="0 0 24 24"><path d="m14 3 7 7-9 9-7-7zM5 12l-2 5 4 4 5-2M3 21h10M10 7l7 7"/></symbol>
+    <symbol id="i-eraser" viewBox="0 0 24 24"><path d="m13 3 8 8-9 10H6l-4-4zM7 12l8 8M12 21h9"/></symbol>
+    <symbol id="i-line" viewBox="0 0 24 24"><path d="m4 20 16-16"/><circle cx="4" cy="20" r="1"/><circle cx="20" cy="4" r="1"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 19 19 5M8 5h11v11"/></symbol>
+    <symbol id="i-rectangle" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1"/></symbol>
+    <symbol id="i-ellipse" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></symbol>
+    <symbol id="i-triangle" viewBox="0 0 24 24"><path d="m12 4 9 16H3z"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 7V4h16v3M12 4v16M8 20h8"/></symbol>
+    <symbol id="i-shapes" viewBox="0 0 24 24"><path d="m8 3 5 8H3z"/><rect x="3" y="15" width="7" height="6" rx="1"/><circle cx="17" cy="17" r="4"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m-5 5 5-5 5 5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7V4h7l3 3h8v13H3z"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4M12 17h.01"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h.01"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M4 10h10a6 6 0 0 1 0 12M4 10l5-5M4 10l5 5" transform="translate(0 -2)"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M20 10H10a6 6 0 0 0 0 12M20 10l-5-5M20 10l-5 5" transform="translate(0 -2)"/></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path d="M9 3H3v6M15 3h6v6M3 15v6h6M21 15v6h-6"/><rect x="8" y="8" width="8" height="8" rx="1"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M5 10v11h14V10M9 21v-7h6v7"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16M18 8h.01M18 12h.01"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7zM3 7l9 5 9-5M12 12v10"/></symbol>
+    <symbol id="i-pyramid" viewBox="0 0 24 24"><path d="m12 3 10 16-10 3-10-3zM12 3v19M2 19l10-4 10 4"/></symbol>
+    <symbol id="i-cylinder" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5"/><path d="M4 18c0-4 16-4 16 0" stroke-dasharray="2 2"/></symbol>
+    <symbol id="i-cone" viewBox="0 0 24 24"><path d="M3 19 12 3l9 16"/><ellipse cx="12" cy="19" rx="9" ry="3"/></symbol>
+    <symbol id="i-axes" viewBox="0 0 24 24"><path d="M3 16h18M8 21V3M5 6l3-3 3 3M18 13l3 3-3 3M4 11h15M13 6v14"/></symbol>
+    <symbol id="i-numberline" viewBox="0 0 24 24"><path d="M2 12h20m-3-3 3 3-3 3M5 9v6M10 9v6M15 9v6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V3h8v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4M12 14v3"/></symbol>
+    <symbol id="i-front" viewBox="0 0 24 24"><rect x="3" y="3" width="12" height="12" rx="2"/><path d="M15 9h6v12H9v-6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M9 15H3V3h12v6"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></symbol>
+  </defs></svg>
+
+  <header class="app-header">
+    <div class="brand" aria-label="Аксиома — математическая доска"><div class="brand-mark">∠</div><div><div class="brand-name">АКСИОМА<span class="brand-dot">.</span></div><div class="brand-subtitle">Математическая доска</div></div></div>
+    <div class="header-divider"></div>
+    <div class="document-info"><input id="board-title" aria-label="Название доски" title="Нажмите, чтобы переименовать урок" value="Первый урок" maxlength="120"><span id="save-status" class="save-status" role="status">Подготовка доски…</span></div>
+    <div class="header-actions">
+      <select id="board-list" aria-label="Выбрать доску" title="Мои доски"><option value="">Мои доски</option></select>
+      <button type="button" class="icon-button header-new" data-action="new-board" title="Новая доска"><svg><use href="#i-plus"/></svg></button>
+      <span class="action-separator"></span>
+      <button type="button" class="icon-button" data-action="load-file" title="Открыть файл доски"><svg><use href="#i-folder"/></svg></button>
+      <button type="button" class="button soft-button" data-action="save-file" title="Скачать редактируемый файл доски"><svg><use href="#i-download"/></svg><span>Сохранить</span></button>
+      <button type="button" class="button primary-button" data-action="export-png" title="Скачать доску как изображение"><svg><use href="#i-image"/></svg><span>Экспорт PNG</span></button>
+      <button type="button" class="icon-button" data-action="print" title="Печать / сохранить PDF"><svg><use href="#i-print"/></svg></button>
+      <button type="button" class="icon-button" data-action="help" title="Как пользоваться доской"><svg><use href="#i-help"/></svg></button>
+    </div>
+  </header>
+
+  <main id="workspace" aria-label="Рабочее пространство">
+    <canvas id="board-canvas" tabindex="0" aria-label="Холст интерактивной доски. Правая кнопка мыши и перетаскивание — перемещение холста. Колесо — масштаб доски, над графиком — масштаб графика. Ctrl и колесо — масштаб доски в любой области."></canvas>
+    <nav class="tool-dock floating-surface" aria-label="Инструменты доски">
+      <button type="button" class="tool-button active" data-tool="select" title="Выделение (V). Потяните за угол рамки, чтобы изменить размер." data-tooltip="Выделение · V" aria-label="Выделение"><svg><use href="#i-select"/></svg></button>
+      <button type="button" class="tool-button" data-tool="hand" title="Перемещение: H, пробел или правая кнопка мыши + перетаскивание" data-tooltip="Перемещение · H / ПКМ" aria-label="Перемещение"><svg><use href="#i-hand"/></svg></button>
+      <span class="dock-divider"></span>
+      <button type="button" class="tool-button" data-tool="pen" title="Перо (P)" data-tooltip="Перо · P" aria-label="Перо"><svg><use href="#i-pen"/></svg></button>
+      <button type="button" class="tool-button" data-tool="marker" title="Маркер (M)" data-tooltip="Маркер · M" aria-label="Маркер"><svg><use href="#i-marker"/></svg></button>
+      <button type="button" class="tool-button" data-tool="eraser" title="Ластик (E)" data-tooltip="Ластик · E" aria-label="Ластик"><svg><use href="#i-eraser"/></svg></button>
+      <span class="dock-divider"></span>
+      <button type="button" class="tool-button" data-tool="line" title="Отрезок (L)" data-tooltip="Отрезок · L" aria-label="Отрезок"><svg><use href="#i-line"/></svg></button>
+      <button type="button" class="tool-button" data-tool="arrow" title="Стрелка" data-tooltip="Стрелка" aria-label="Стрелка"><svg><use href="#i-arrow"/></svg></button>
+      <button type="button" class="tool-button" data-tool="rectangle" title="Прямоугольник (R)" data-tooltip="Прямоугольник · R" aria-label="Прямоугольник"><svg><use href="#i-rectangle"/></svg></button>
+      <button type="button" class="tool-button" data-tool="ellipse" title="Окружность (O)" data-tooltip="Окружность · O" aria-label="Окружность"><svg><use href="#i-ellipse"/></svg></button>
+      <button type="button" class="tool-button" data-tool="triangle" title="Треугольник" data-tooltip="Треугольник" aria-label="Треугольник"><svg><use href="#i-triangle"/></svg></button>
+      <button type="button" class="tool-button" data-tool="text" title="Текст (T)" data-tooltip="Текст · T" aria-label="Текст"><svg><use href="#i-text"/></svg></button>
+      <span class="dock-divider"></span>
+      <button type="button" class="tool-button" data-action="import-image" title="Добавить изображение" data-tooltip="Изображение" aria-label="Добавить изображение"><svg><use href="#i-image"/></svg></button>
+      <button type="button" class="tool-button shape-tool" data-action="shapes" title="Математические инструменты" data-tooltip="Математика" aria-label="Математические инструменты"><svg><use href="#i-shapes"/></svg></button>
+    </nav>
+
+    <button type="button" class="icon-button panel-toggle floating-surface" data-action="toggle-panel" title="Показать / скрыть инструменты" aria-label="Показать или скрыть панель инструментов"><svg><use href="#i-panel"/></svg></button>
+
+    <aside id="properties" class="properties floating-surface" aria-label="Настройки и математические инструменты">
+      <div class="panel-heading"><div><h1>Инструменты</h1><p>Для ваших идей и открытий</p></div><span class="panel-decoration">✳</span></div>
+      <section class="property-section">
+        <div class="section-label">Цвет линии</div>
+        <div class="color-palette" aria-label="Цвета">
+          <button type="button" class="color-swatch active" data-color="#243b43" style="--swatch:#243b43" title="Графитовый" aria-label="Графитовый"></button>
+          <button type="button" class="color-swatch" data-color="#167d8d" style="--swatch:#167d8d" title="Бирюзовый" aria-label="Бирюзовый"></button>
+          <button type="button" class="color-swatch" data-color="#7265b2" style="--swatch:#7265b2" title="Фиолетовый" aria-label="Фиолетовый"></button>
+          <button type="button" class="color-swatch" data-color="#e47550" style="--swatch:#e47550" title="Коралловый" aria-label="Коралловый"></button>
+          <button type="button" class="color-swatch" data-color="#d9a52b" style="--swatch:#d9a52b" title="Золотой" aria-label="Золотой"></button>
+          <button type="button" class="color-swatch white-swatch" data-color="#ffffff" style="--swatch:#ffffff" title="Белый" aria-label="Белый"></button>
+          <label class="custom-color-label" title="Другой цвет"><input type="color" id="custom-color" value="#243b43" aria-label="Выбрать другой цвет"><span>+</span></label>
+        </div>
+        <div class="label-row"><label for="stroke-width">Толщина</label><output id="width-value">3</output></div>
+        <input type="range" id="stroke-width" min="1" max="16" value="3" aria-label="Толщина линии">
+        <div class="check-row"><label><input type="checkbox" id="fill-toggle"><span>Заливка</span></label><label><input type="checkbox" id="dashed-toggle"><span>Пунктир</span></label></div>
+        <div class="field-row text-size-row"><label for="font-size">Размер текста</label><select id="font-size"><option value="18">18</option><option value="24">24</option><option value="26" selected>26</option><option value="32">32</option><option value="40">40</option><option value="56">56</option></select></div>
+      </section>
+      <section class="property-section">
+        <div class="section-label">Пространство</div>
+        <div class="field-row"><label for="grid-mode">Фон доски</label><select id="grid-mode"><option value="dots">В точку</option><option value="grid">В клетку</option><option value="axes">Координаты</option><option value="blank">Чистый лист</option></select></div>
+        <label class="check-label"><input type="checkbox" id="snap-toggle"><span>Привязка к сетке</span></label>
+      </section>
+      <section class="generator-section">
+        <button type="button" class="generate-tasks-button" data-action="generate-tasks" title="Создать набор заданий по теме и уровню"><span class="generator-icon"><svg><use href="#i-copy"/></svg></span><span><strong>Создать задания</strong><small>По теме и уровню</small></span><svg class="generator-arrow"><use href="#i-arrow"/></svg></button>
+      </section>
+      <section class="property-section" id="geometry-section">
+        <div class="section-label">Математика <span class="section-count">6 фигур</span></div>
+        <div class="shape-grid">
+          <button type="button" data-insert="cube"><svg><use href="#i-cube"/></svg><span>Куб</span></button>
+          <button type="button" data-insert="pyramid"><svg><use href="#i-pyramid"/></svg><span>Пирамида</span></button>
+          <button type="button" data-insert="cylinder"><svg><use href="#i-cylinder"/></svg><span>Цилиндр</span></button>
+          <button type="button" data-insert="cone"><svg><use href="#i-cone"/></svg><span>Конус</span></button>
+          <button type="button" data-insert="axes"><svg><use href="#i-axes"/></svg><span>Оси</span></button>
+          <button type="button" data-insert="numberline"><svg><use href="#i-numberline"/></svg><span>Прямая</span></button>
+        </div>
+        <label class="section-label graph-label" for="graph-expression">График функции</label>
+        <div class="graph-input"><span>y =</span><input id="graph-expression" value="x^2" maxlength="200" spellcheck="false" autocomplete="off" aria-label="Выражение для графика функции"><button type="button" data-action="add-graph" title="Построить график" aria-label="Построить график"><svg><use href="#i-plus"/></svg></button></div>
+        <p class="field-hint">x^2, sin(x), sqrt(x), abs(x)<br>asin(x), acos(x), atan(x), acot(x)</p>
+        <p class="field-hint inverse-hint">arcsin, arccos, arctg, arcctg · углы в радианах</p>
+        <p class="graph-interaction-hint">Колесо над графиком — масштаб. Углы рамки — размер.</p>
+        <button type="button" class="reset-graph-button" data-action="reset-graph-view" title="Выделите график, чтобы вернуть исходный масштаб" disabled><svg><use href="#i-fit"/></svg>Сбросить масштаб графика</button>
+      </section>
+      <section class="property-section object-section">
+        <div class="section-label" id="selection-label">Стиль объектов</div>
+        <div class="object-actions">
+          <button type="button" class="icon-button" data-action="duplicate" title="Дублировать (Ctrl+D)" aria-label="Дублировать"><svg><use href="#i-copy"/></svg></button>
+          <button type="button" class="icon-button" data-action="lock" title="Закрепить / открепить" aria-label="Закрепить или открепить"><svg><use href="#i-lock"/></svg></button>
+          <button type="button" class="icon-button" data-action="front" title="На передний план" aria-label="На передний план"><svg><use href="#i-front"/></svg></button>
+          <button type="button" class="icon-button" data-action="back" title="На задний план" aria-label="На задний план"><svg><use href="#i-back"/></svg></button>
+          <button type="button" class="icon-button danger-button" data-action="delete" title="Удалить (Delete)" aria-label="Удалить"><svg><use href="#i-trash"/></svg></button>
+        </div>
+      </section>
+      <div class="panel-file-actions"><button type="button" data-action="print"><svg><use href="#i-print"/></svg>Печать / PDF</button><button type="button" data-action="help"><svg><use href="#i-help"/></svg>Справка</button></div>
+      <button type="button" class="clear-button" data-action="clear-board"><svg><use href="#i-spark"/></svg>Очистить доску</button>
+    </aside>
+
+    <div class="history-controls floating-surface" aria-label="История действий"><button type="button" class="icon-button" data-action="undo" title="Отменить (Ctrl+Z)" aria-label="Отменить"><svg><use href="#i-undo"/></svg></button><button type="button" class="icon-button" data-action="redo" title="Повторить (Ctrl+Shift+Z)" aria-label="Повторить"><svg><use href="#i-redo"/></svg></button></div>
+    <div id="tool-hint" class="tool-hint">ПКМ + перетаскивание — холст · Колесо — масштаб · Ctrl + колесо — масштаб доски везде</div>
+    <div class="zoom-controls floating-surface" aria-label="Масштаб доски" title="Колесо вне графика или Ctrl + колесо в любой области — масштаб доски"><button type="button" class="icon-button" data-action="zoom-out" title="Уменьшить доску" aria-label="Уменьшить доску"><svg><use href="#i-minus"/></svg></button><input id="zoom-slider" type="range" min="0" max="100" step="1" value="53" aria-label="Масштаб доски" title="Масштаб доски"><button type="button" class="icon-button" data-action="zoom-in" title="Увеличить доску" aria-label="Увеличить доску"><svg><use href="#i-plus"/></svg></button><span id="zoom-value">100%</span><span class="action-separator"></span><button type="button" class="icon-button" data-action="fit" title="Показать всё" aria-label="Показать всё"><svg><use href="#i-fit"/></svg></button><button type="button" class="icon-button reset-zoom" data-action="reset-view" title="Вернуться к началу" aria-label="Вернуться к началу">1:1</button></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <dialog id="modal" class="modal"><div class="modal-header"><h2 id="modal-title"></h2><button type="button" id="modal-close" class="icon-button" aria-label="Закрыть"><svg><use href="#i-close"/></svg></button></div><div id="modal-body" class="modal-body"></div><div id="modal-actions" class="modal-actions"></div></dialog>
+  <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" hidden>
+  <input type="file" id="project-input" accept=".json,.axioma,application/json" hidden>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
