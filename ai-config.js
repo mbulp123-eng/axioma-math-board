@@ -1,3 +1,2 @@
-// Public Worker origin, e.g. https://axioma-ai.YOUR-SUBDOMAIN.workers.dev
-// This is a public endpoint, not an API key. Set after the Worker is deployed.
-export const AI_ENDPOINT = '';
+// Public Cloudflare Worker origin; this URL is not an API key.
+export const AI_ENDPOINT = 'https://axioma-math-board.m-bul-p123.workers.dev';

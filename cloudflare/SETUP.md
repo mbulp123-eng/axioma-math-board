@@ -10,7 +10,7 @@
 
 | Поле | Значение |
 | --- | --- |
-| Project / Worker name | `axioma-ai` — как в `wrangler.jsonc` |
+| Project / Worker name | `axioma-math-board` — как в `wrangler.jsonc` |
 | Production branch | `main` |
 | Root directory | корень репозитория `/` |
 | Build command | оставить пустым |
@@ -24,12 +24,12 @@
 
 ## 2. Подключите адрес к доске
 
-1. Скопируйте публичный адрес вида `https://axioma-ai.ВАШ-ПОДДОМЕН.workers.dev` из карточки Worker. Это не секрет.
+1. Скопируйте публичный адрес вида `https://axioma-math-board.m-bul-p123.workers.dev` из карточки Worker. Это не секрет.
 2. Откройте этот адрес. Должен появиться JSON с `service: "axioma-ai"` и `ready: true`. Это проверяет наличие привязок, но ещё не проверяет саму модель.
 3. В корневом `ai-config.js` замените пустую строку адресом Worker без пути `/api/assist`:
 
 ```js
-export const AI_ENDPOINT = 'https://axioma-ai.ВАШ-ПОДДОМЕН.workers.dev';
+export const AI_ENDPOINT = 'https://axioma-math-board.m-bul-p123.workers.dev';
 ```
 
 4. Сохраните изменение в `main`, дождитесь успешного GitHub Pages deployment и обновите сайт. Если браузер держит старую версию, используйте Ctrl+Shift+R.
@@ -63,6 +63,6 @@ export const AI_ENDPOINT = 'https://axioma-ai.ВАШ-ПОДДОМЕН.workers.de
 | «Слишком много запросов» | Подождать минуту; общий IP школьной сети тоже учитывается |
 | «Бесплатный лимит исчерпан» | Дождаться суточного обновления квоты |
 | «Модель недоступна» | Модель и доступность на Free в актуальной документации Cloudflare |
-| Ошибка сборки | Worker name `axioma-ai`, корень `/`, команда `npx wrangler deploy`; Wrangler не ниже 4.36.0 |
+| Ошибка сборки | Worker name `axioma-math-board`, корень `/`, команда `npx wrangler deploy`; Wrangler не ниже 4.36.0 |
 
 Официальные документы: [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/), [Workers AI binding](https://developers.cloudflare.com/workers-ai/get-started/workers-wrangler/), [модель](https://developers.cloudflare.com/workers-ai/models/gemma-4-26b-a4b-it/), [тарифы](https://developers.cloudflare.com/workers-ai/platform/pricing/), [rate limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/).
