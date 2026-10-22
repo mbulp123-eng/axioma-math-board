@@ -1,0 +1,74 @@
+import assert from 'node:assert/strict';
+import { AIError, validateAIRequest, buildAIMessages, parseAIResponse, protectMath, restoreMath, resultBlocks } from '../ai-core.js';
+import worker from '../cloudflare/worker.js';
+
+const request = action => validateAIRequest({ action, source: 'Решите x + 2 = 5', image: action === 'ocr' ? 'data:image/png;base64,AA==' : '', prompt: 'Для 7 класса' });
+const completion = result => ({ choices: [{ message: { content: JSON.stringify(result) }, finish_reason: 'stop' }] });
+const plain = { title: 'Подсказка', text: 'Какое действие обратное сложению?', tasks: [], warning: '' };
+for (const action of ['similar','ocr','hint','check','translate','custom']) {
+  const r = request(action), { messages } = buildAIMessages(r);
+  assert.equal(messages.length, 2); assert.equal(messages[0].role, 'system');
+  if (action === 'ocr') assert.equal(messages[1].content[1].image_url.url, r.image);
+}
+assert.throws(() => validateAIRequest({ action: 'constructor', prompt: 'test' }), AIError);
+assert.throws(() => validateAIRequest({ action: 'custom', image: 'https://example.org/private.jpg' }), AIError);
+assert.throws(() => validateAIRequest({ action: 'custom', prompt: 'x'.repeat(4001) }), AIError);
+assert.throws(() => validateAIRequest({ action: 'ocr', source: 'Только текст' }), AIError);
+assert.throws(() => validateAIRequest({ action: 'similar', source: 'x = 3', options: { min: 5, max: 2 } }), AIError);
+assert.throws(() => validateAIRequest({ action: 'hint', source: 'x = 3', previousHints: Array(7).fill('a') }), AIError);
+assert.throws(() => validateAIRequest({ action: 'translate', image: 'data:image/png;base64,AA==' }), AIError);
+const equation = 'Решите $\\frac{x}{2}=3$ и x² + 2x = 8. Найдите 3,5% от 200.';
+const protectedSource = protectMath(equation);
+assert.equal(restoreMath(protectedSource.text, protectedSource), equation);
+assert.throws(() => restoreMath(protectedSource.text.replace('AXIOMA_MATH_0_END', ''), protectedSource), e => e.code === 'formula_changed');
+assert.throws(() => restoreMath(protectedSource.text + ' AXIOMA_MATH_0_END', protectedSource), e => e.code === 'formula_changed');
+const tr = request('translate'), prompt = buildAIMessages(tr);
+const translated = parseAIResponse(completion({ ...plain, text: prompt.protectedSource.text.replace('Решите', 'Шешіңіз') }), tr, prompt.protectedSource);
+assert.equal(translated.text, 'Шешіңіз x + 2 = 5');
+const similar = { title: 'Уравнения', text: '', tasks: [{ question: 'x + 1 = 3', answer: '2' }, { question: 'x + 2 = 3', answer: '1' }, { question: 'x + 3 = 3', answer: '0' }], warning: '' };
+assert.equal(parseAIResponse(completion(similar), request('similar')).tasks.length, 3);
+assert.throws(() => parseAIResponse(completion({ ...similar, tasks: similar.tasks.slice(1) }), request('similar')), e => e.code === 'constraint_failed');
+assert.throws(() => parseAIResponse(completion({ ...similar, tasks: similar.tasks.map(t => ({ ...t, answer: '1/2' })) }), request('similar')), e => e.code === 'constraint_failed');
+assert.throws(() => parseAIResponse(completion({ ...plain, tasks: [null] }), request('custom')), e => e.code === 'invalid_response');
+assert.throws(() => parseAIResponse({ choices: [{ finish_reason: 'length' }] }, request('hint')), e => e.code === 'truncated');
+assert.throws(() => parseAIResponse(completion(similar), request('hint')), e => e.code === 'invalid_response');
+assert.equal(resultBlocks(similar).length, 4); assert(!resultBlocks(similar).some(b => b.answers));
+assert.equal(resultBlocks(similar, true).at(-1).text, 'Ответы\n1. 2\n2. 1\n3. 0');
+
+const origin = 'https://mbulp123-eng.github.io';
+let calls = [], allow = true, output = completion(plain), failure = null;
+const env = { ALLOWED_ORIGIN: origin, AI_RATE_LIMITER: { async limit({ key }) { assert.equal(key, '192.0.2.1'); return { success: allow }; } }, AI: { async run(model, payload) { calls.push({ model, payload }); if (failure) throw failure; return output; } } };
+function req(body = { action: 'hint', source: 'x + 2 = 5' }, options = {}) {
+  return new Request('https://axioma-ai.example.workers.dev/api/assist', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin, 'CF-Connecting-IP': '192.0.2.1', ...options.headers }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+}
+let response = await worker.fetch(req(), env);
+assert.equal(response.status, 200); assert.deepEqual((await response.json()).result, plain);
+assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
+assert.equal(response.headers.get('Cache-Control'), 'no-store');
+assert.equal(calls[0].payload.chat_template_kwargs.enable_thinking, false);
+assert.equal(calls[0].payload.response_format.type, 'json_schema');
+assert.equal(calls[0].payload.max_completion_tokens, 700);
+const before = calls.length;
+assert.equal((await worker.fetch(req(undefined, { headers: { Origin: 'https://another.example' } }), env)).status, 403);
+assert.equal((await worker.fetch(req({ action: 'bad' }), env)).status, 400);
+assert.equal((await worker.fetch(req('{invalid'), env)).status, 400);
+assert.equal((await worker.fetch(req(), {})).status, 503);
+assert.equal((await worker.fetch(req(undefined, { headers: { 'Content-Type': 'text/plain' } }), env)).status, 415);
+assert.equal((await worker.fetch(req(undefined, { headers: { 'CF-Connecting-IP': '' } }), env)).status, 403);
+assert.equal((await worker.fetch(req('x'.repeat(1900001)), env)).status, 413);
+allow = false; response = await worker.fetch(req(), env); assert.equal(response.status, 429); assert.equal(response.headers.get('Retry-After'), '60'); allow = true;
+assert.equal(calls.length, before, 'Invalid and throttled requests must never reach the model');
+response = await worker.fetch(new Request('https://axioma-ai.example.workers.dev/health'), env);
+assert((await response.json()).ready); assert.equal(calls.length, before, 'Health check must not consume inference quota');
+assert.equal((await worker.fetch(new Request('https://axioma-ai.example.workers.dev/api/assist'), env)).status, 405);
+assert.equal((await worker.fetch(new Request('https://axioma-ai.example.workers.dev/nope'), env)).status, 404);
+response = await worker.fetch(new Request('https://axioma-ai.example.workers.dev/api/assist', { method: 'OPTIONS', headers: { Origin: origin } }), env);
+assert.equal(response.status, 204); assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
+failure = new Error('3036 daily free allocation exhausted private-internal-detail');
+response = await worker.fetch(req(), env); assert.equal(response.status, 429);
+const error = await response.json(); assert.equal(error.code, 'daily_limit'); assert(!error.error.includes('private-internal-detail'));
+failure = new Error('provider failure secret detail');
+response = await worker.fetch(req(), env); assert.equal(response.status, 502); assert.equal((await response.json()).code, 'provider_error');
+failure = null; output = completion({ ...plain, text: '' });
+response = await worker.fetch(req(), env); assert.equal(response.status, 502); assert.equal((await response.json()).code, 'empty_response');
+console.log('PASS: AI request/response contracts, image payload, translation integrity, integer answers, separate answers, origin/body limits, throttling, quota errors and safe error messages. Model calls were mocked.');

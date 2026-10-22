@@ -7,6 +7,7 @@
   <meta name="description" content="Аксиома — интерактивная доска для учителя математики. Рисуйте, стройте фигуры, объясняйте и сохраняйте уроки.">
   <title>Аксиома — математическая доска</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="ai.css">
 </head>
 <body>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -56,6 +57,7 @@
     <div class="header-divider"></div>
     <div class="document-info"><input id="board-title" aria-label="Название доски" title="Нажмите, чтобы переименовать урок" value="Первый урок" maxlength="120"><span id="save-status" class="save-status" role="status">Подготовка доски…</span></div>
     <div class="header-actions">
+      <button type="button" class="button ai-open" data-ai-open="custom" title="ИИ-помощник" aria-controls="ai-drawer" aria-expanded="false"><svg><use href="#i-spark"/></svg><span>ИИ-помощник</span></button>
       <select id="board-list" aria-label="Выбрать доску" title="Мои доски"><option value="">Мои доски</option></select>
       <button type="button" class="icon-button header-new" data-action="new-board" title="Новая доска"><svg><use href="#i-plus"/></svg></button>
       <span class="action-separator"></span>
@@ -68,6 +70,53 @@
   </header>
 
   <main id="workspace" aria-label="Рабочее пространство">
+    <nav id="ai-selection" class="ai-selection floating-surface" aria-label="ИИ для выделенного задания" hidden>
+      <button type="button" data-ai-open="similar">3 похожих</button>
+      <button type="button" data-ai-open="hint">Подсказка</button>
+      <button type="button" data-ai-open="check">Ошибка?</button>
+      <button type="button" data-ai-open="ocr">Распознать</button>
+      <button type="button" data-ai-open="translate">Перевести</button>
+    </nav>
+    <aside id="ai-drawer" class="ai-drawer" aria-labelledby="ai-title" hidden>
+      <div class="ai-heading"><div><span class="ai-eyebrow">ПОМОЩНИК УЧИТЕЛЯ</span><h2 id="ai-title">От вопроса к открытию</h2></div><button id="ai-close" type="button" class="icon-button" aria-label="Закрыть ИИ-помощника"><svg><use href="#i-close"/></svg></button></div>
+      <div class="ai-scroll">
+        <p id="ai-connection" class="ai-connection" role="status"></p>
+        <div class="ai-modes" role="group" aria-label="Действие ИИ">
+          <button type="button" data-ai-mode="similar">Похожие задания</button><button type="button" data-ai-mode="custom">Свой запрос</button>
+          <button type="button" data-ai-mode="ocr">Фото → формула</button><button type="button" data-ai-mode="hint">Следующий шаг</button>
+          <button type="button" data-ai-mode="check">Проверить решение</button><button type="button" data-ai-mode="translate">Русский ↔ Қазақша</button>
+        </div>
+        <form id="ai-form">
+          <fieldset id="ai-fields">
+            <label class="ai-label" for="ai-source">Исходное задание или решение</label>
+            <textarea id="ai-source" rows="4" maxlength="12000" placeholder="Выделите задание на доске или введите его здесь…"></textarea>
+            <div class="ai-source-actions"><button id="ai-take-selection" type="button">Взять выделенное</button><button id="ai-upload" type="button">Загрузить фото</button></div>
+            <input id="ai-file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <figure id="ai-photo" hidden><img id="ai-image" alt="Изображение, которое будет отправлено ИИ"><figcaption><span>Отправится только этот фрагмент</span><button id="ai-remove-photo" type="button">Убрать</button></figcaption></figure>
+            <div id="ai-similar-options" hidden>
+              <div class="ai-row"><label>Количество<input id="ai-count" type="number" min="1" max="6" value="3" required></label><label>Сложность<select id="ai-difficulty"><option value="easy">Базовая</option><option value="medium" selected>Средняя</option><option value="hard">Повышенная</option></select></label></div>
+              <div class="ai-row"><label>Числа от<input id="ai-min" type="number" min="-10000" max="10000" value="-20" required></label><label>до<input id="ai-max" type="number" min="-10000" max="10000" value="20" required></label></div>
+              <label class="ai-check"><input id="ai-integers" type="checkbox" checked> Только целые ответы</label>
+            </div>
+            <label class="ai-label" for="ai-prompt">Ваш запрос или уточнение</label>
+            <textarea id="ai-prompt" rows="3" maxlength="4000" placeholder="Например: составь 3 задачи на условную вероятность для 10 класса"></textarea>
+            <label class="ai-label" for="ai-language">Язык результата</label><select id="ai-language"><option value="ru">Русский</option><option value="kk">Қазақша</option></select>
+            <p id="ai-mode-help" class="ai-note"></p>
+          </fieldset>
+          <p class="ai-note">При отправке текст, запрос и выбранное изображение получит Cloudflare AI. Остальная доска не отправляется.</p>
+          <div class="ai-run-row"><button id="ai-run" class="button primary-button" type="submit">Отправить запрос</button><button id="ai-cancel" class="button soft-button" type="button" hidden>Отменить</button></div>
+        </form>
+        <p id="ai-status" class="ai-status" role="status" aria-live="polite"></p>
+        <section id="ai-result" class="ai-result" aria-label="Предпросмотр результата" hidden>
+          <div class="ai-result-heading"><h3>Проверьте и исправьте</h3><span>ПРЕДПРОСМОТР</span></div>
+          <p class="ai-note">ИИ может ошибаться в вычислениях и распознавании. Текст ниже можно редактировать.</p>
+          <div id="ai-result-fields"></div><p id="ai-warning" class="ai-warning" hidden></p>
+          <label id="ai-answers-label" class="ai-check" hidden><input id="ai-include-answers" type="checkbox"> Добавить ответы отдельным блоком</label>
+          <div class="ai-result-actions"><button id="ai-insert" type="button" class="button primary-button">Добавить на доску</button><button id="ai-use-text" type="button" class="button soft-button" hidden>Взять как исходный текст</button></div>
+        </section>
+      </div>
+      <div class="ai-footer">Без регистрации · бесплатная общая квота</div>
+    </aside>
     <canvas id="board-canvas" tabindex="0" aria-label="Холст интерактивной доски. Правая кнопка мыши и перетаскивание — перемещение холста. Колесо — масштаб доски, над графиком — масштаб графика. Ctrl и колесо — масштаб доски в любой области."></canvas>
     <nav class="tool-dock floating-surface" aria-label="Инструменты доски">
       <button type="button" class="tool-button active" data-tool="select" title="Выделение (V). Потяните за угол рамки, чтобы изменить размер." data-tooltip="Выделение · V" aria-label="Выделение"><svg><use href="#i-select"/></svg></button>
@@ -159,3 +208,4 @@
   <script type="module" src="app.js"></script>
 </body>
 </html>
+

@@ -1,0 +1,10 @@
+{
+  "name": "axioma-math-board",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/core-check.mjs && node tests/tasks-check.mjs && node tests/ai-check.mjs && node tests/ai-ui-check.mjs",
+    "deploy:ai": "wrangler deploy"
+  },
+  "devDependencies": { "wrangler": "^4.36.0" }
+}

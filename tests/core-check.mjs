@@ -19,10 +19,10 @@ elements.get('graph-expression').value='x^2';
 const selectAll=s=>{const m=s.match(/^\[data-([\w-]+)(?:="([^"]+)")?\]$/);return m?buttons.filter(b=>m[1] in b.dataset&&(!m[2]||b.dataset[m[1]]===m[2])):[]};
 const doc={activeElement:null,handlers:{},getElementById:id=>elements.get(id),querySelectorAll:selectAll,querySelector:s=>selectAll(s)[0],createElement:element,addEventListener(k,fn){this.handlers[k]=fn}};
 class FakeImage{constructor(){this.complete=false;this.naturalWidth=100;this.naturalHeight=100}set src(s){this._src=s}get src(){return this._src}async decode(){this.complete=true;return undefined}}
-const sandbox={console,document:doc,window:{devicePixelRatio:1,matchMedia:()=>({matches:false}),addEventListener(){},open:()=>null},navigator:{clipboard:{writeText:async()=>{}}},crypto:webcrypto,localStorage:{getItem:k=>dataStore.get(k)||null,setItem:(k,v)=>dataStore.set(k,v)},ResizeObserver:class{constructor(cb){this.cb=cb}observe(){this.cb()}},requestAnimationFrame:fn=>fn(),setTimeout:()=>0,clearTimeout(){},Image:FakeImage,Blob,URL,drawMathObject,compileExpression,getMathDefaults,normalizeGraphView,zoomGraphAt,resetGraphView,TASK_TOPICS,generateTasks};
+const sandbox={initAI:()=>({updateSelection(){},hasFocus:()=>false}),console,document:doc,window:{devicePixelRatio:1,matchMedia:()=>({matches:false}),addEventListener(){},open:()=>null},navigator:{clipboard:{writeText:async()=>{}}},crypto:webcrypto,localStorage:{getItem:k=>dataStore.get(k)||null,setItem:(k,v)=>dataStore.set(k,v)},ResizeObserver:class{constructor(cb){this.cb=cb}observe(){this.cb()}},requestAnimationFrame:fn=>fn(),setTimeout:()=>0,clearTimeout(){},Image:FakeImage,Blob,URL,drawMathObject,compileExpression,getMathDefaults,normalizeGraphView,zoomGraphAt,resetGraphView,TASK_TOPICS,generateTasks};
 vm.createContext(sandbox);
 let src=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');src=src.replace(/^import .*?;\n/gm,'').replace('await initStorage();','demo();updateControls();commit();setTool(\'select\');');
-src+='\nglobalThis.test={state,chosen,union,hit,commit,undo,setTool,validateScene,render,persist,scheduleSave,exportCanvas,images,insertTaskSet,taskGeneratorDialog,setDB:x=>db=x,getDirty:()=>dirty};';
+src+='\nglobalThis.test={state,chosen,union,hit,commit,undo,setTool,validateScene,render,persist,scheduleSave,exportCanvas,captureAISelection,insertAIBlocks,images,insertTaskSet,taskGeneratorDialog,setDB:x=>db=x,getDirty:()=>dirty};';
 vm.runInContext(src,sandbox);
 const t=sandbox.test,c=elements.get('board-canvas');
 assert(t.state.objects.length>10);t.render();
@@ -79,3 +79,19 @@ const samples=generateTasks({topic:'linear',level:'medium',count:3},()=>.42),bef
 t.insertTaskSet(samples,{topic:'linear',level:'medium',count:3,includeAnswers:false});assert.equal(t.state.objects.length,beforeTasks+5);assert(t.state.objects.at(-1).text.includes(samples[2].question));
 t.taskGeneratorDialog();assert(elements.get('modal').open);assert.equal(elements.get('modal-actions').children.length,2);
 console.log('PASS: core logic; right-button pan; gentle board wheel; anchored graph zoom; grouped undo; frame resize; slider; graph view roundtrip; inverse functions; task insertion and dialog.');
+
+// AI receives only selected content and adds editable text in one undo transaction.
+t.state.selected=new Set([t.state.objects.at(-1).id]);
+const selectedSource=await t.captureAISelection();
+assert.equal(selectedSource.source,t.state.objects.at(-1).text);assert.equal(selectedSource.image,'');assert.equal(selectedSource.count,1);
+const oldCount=t.state.objects.length,oldObjects=JSON.stringify(t.state.objects);
+t.insertAIBlocks([{text:'Новые задания',heading:true},{text:'Решите x + 3 = 8'},{text:'Ответы\n1. 5',answers:true}],t.state.id);
+assert.equal(t.state.objects.length,oldCount+3);assert(t.chosen().every(o=>o.type==='text'));
+assert(t.state.objects.at(-1).x>t.state.objects.at(-2).x);
+t.undo(-1);assert.equal(JSON.stringify(t.state.objects),oldObjects);t.undo(1);assert.equal(t.state.objects.length,oldCount+3);
+assert.throws(()=>t.insertAIBlocks([{text:'Нельзя'}],'another-board'));
+const long='Длинный текст с формулой x² + 1. '.repeat(300);
+t.insertAIBlocks([{text:long}],t.state.id);assert(t.chosen().length>1);assert(t.chosen().every(o=>o.text.length<=3500));
+assert.equal(t.validateScene({objects:t.chosen(),title:'AI'}).objects.length,t.chosen().length);
+console.log('PASS: selected-only AI context, editable insertion, separate answer column, single undo, stale-board guard and long-text save/load.');
+
