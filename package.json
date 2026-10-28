@@ -3,8 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/core-check.mjs && node tests/tasks-check.mjs && node tests/ai-check.mjs && node tests/ai-ui-check.mjs",
-    "deploy:ai": "wrangler deploy"
+    "test": "node tests/core-check.mjs && node tests/tasks-check.mjs && node tests/ai-check.mjs && node tests/ai-ui-check.mjs && node tests/reliability-check.mjs",
+    "deploy:ai": "wrangler deploy",
+    "test:browser": "node tests/browser-check.mjs"
   },
-  "devDependencies": { "wrangler": "^4.36.0" }
+  "devDependencies": {
+    "wrangler": "^4.36.0"
+  }
 }

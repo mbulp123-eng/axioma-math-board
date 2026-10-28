@@ -6,6 +6,7 @@ export function initAI(board) {
   const $ = id => document.getElementById(id);
   const panel = $('ai-drawer'), toolbar = $('ai-selection');
   let action = 'custom', photo = '', controller = null, captureVersion = 0, capturing = false;
+  let modelAnswered = false;
   let hints = [], hintKey = '', draft = null, resultBoard = null, returnFocus = null;
   let endpoint = '';
   try { const url = new URL(AI_ENDPOINT); if (url.protocol === 'https:' && !url.username && !url.password) endpoint = url.origin; } catch {}
@@ -149,9 +150,10 @@ export function initAI(board) {
       const response = await fetch(endpoint + '/api/assist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal: current.signal, credentials: 'omit', cache: 'no-store' });
       const data = await response.json().catch(() => { throw new Error('Сервис вернул нечитаемый ответ. Проверьте подключение ИИ.'); });
       if (!response.ok) throw new Error(data.error || 'Сервис ИИ временно недоступен.');
-      if (!data.result || typeof data.result.text !== 'string' || typeof data.result.title !== 'string' || !Array.isArray(data.result.tasks)) throw new Error('Сервис вернул неполный результат. Повторите запрос.');
+      if (!data.result || typeof data.result.text !== 'string' || data.result.text.length>16000 || typeof data.result.title !== 'string' || data.result.title.length>160 || !Array.isArray(data.result.tasks) || data.result.tasks.length>20 || data.result.tasks.some(t=>!t||typeof t.question!=='string'||t.question.length>4000||typeof t.answer!=='string'||t.answer.length>4000) || (data.result.warning!==undefined&&typeof data.result.warning!=='string')) throw new Error('Сервис вернул неполный результат. Повторите запрос.');
       if (current !== controller || current.signal.aborted) return;
       if (board.id() !== boardId) throw new Error('Вы переключили доску. Повторите запрос на нужной доске.');
+      modelAnswered=true;$('ai-connection').textContent='Получен ответ модели через обработчик. Математическую точность проверяет учитель.';
       preview(data.result, boardId);
       if (action === 'hint') hints.push(data.result.text);
       status(action === 'hint' ? `Подсказка ${hints.length} из 6. Проверьте её перед показом ученику.` : 'Результат готов к проверке. Он ещё не добавлен на доску.');
@@ -163,8 +165,8 @@ export function initAI(board) {
   if (endpoint) {
     const health = new AbortController(), timeout = setTimeout(() => health.abort(), 10000);
     fetch(endpoint + '/health', { signal: health.signal, credentials: 'omit', cache: 'no-store' })
-      .then(r => r.json()).then(data => { $('ai-connection').textContent = data.service === 'axioma-ai' && data.ready ? 'Обработчик подключён · можно отправить запрос' : 'Обработчик требует настройки. Сообщите владельцу сайта.'; })
-      .catch(() => { $('ai-connection').textContent = 'Не удалось проверить соединение. Можно повторить попытку, отправив запрос.'; })
+      .then(r => {if(!r.ok)throw Error('Health HTTP '+r.status);return r.json()}).then(data => { if(modelAnswered)return;$('ai-connection').textContent = data.service === 'axioma-ai' && data.ready ? 'Обработчик доступен · ответ модели ещё не проверен' : 'Обработчик требует настройки. Сообщите владельцу сайта.'; })
+      .catch(() => { if(modelAnswered)return;$('ai-connection').textContent = 'Не удалось проверить соединение. Можно повторить попытку, отправив запрос.'; })
       .finally(() => clearTimeout(timeout));
   }
   mode('custom');

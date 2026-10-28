@@ -91,21 +91,19 @@ for (const { id, label, grades } of TASK_TOPICS) {
         } else if (id === 'linear' || id === 'quadratic') {
           const equation = question.slice(question.indexOf(':') + 1, -1).trim();
           const [left, right] = equation.split('=');
-          const roots = [...answer.matchAll(/= ([−\d]+)/g)].map(match => Number(match[1].replace('−', '-')));
-          assert(roots.length > 0 && roots.every(Number.isInteger));
+          const roots = answer.includes('=')?answer.split(';').map(part=>evaluate(part.split('=')[1].trim())):[];
           for (const root of roots) close(evaluate(left, root), evaluate(right, root), question + ' / ' + answer);
-          const constant = evaluate(left, 0) - evaluate(right, 0);
+          const f=x=>evaluate(left,x)-evaluate(right,x),constant=f(0);
           if (id === 'linear') {
-            const coefficient = evaluate(left, 1) - evaluate(right, 1) - constant;
-            assert.notEqual(coefficient, 0); assert.equal(roots.length, 1);
-            close(roots[0], -constant / coefficient, question);
+            const coefficient=f(1)-constant;
+            if(Math.abs(coefficient)<1e-9){assert.equal(roots.length,0);assert.equal(answer,Math.abs(constant)<1e-9?'Любое действительное число':'Нет решений');}
+            else {assert.equal(roots.length,1);close(roots[0],-constant/coefficient,question);}
           } else {
-            const f1 = evaluate(left, 1), fMinus1 = evaluate(left, -1);
-            const a = (f1 + fMinus1 - 2 * constant) / 2;
-            const b = (f1 - fMinus1) / 2;
-            const discriminant = b * b - 4 * a * constant;
-            assert.notEqual(a, 0); assert(discriminant >= 0);
-            assert.equal(roots.length, discriminant === 0 ? 1 : 2);
+            const a=(f(1)+f(-1)-2*constant)/2,b=(f(1)-f(-1))/2,D=b*b-4*a*constant;
+            assert.notEqual(a,0);assert.equal(roots.length,D<0?0:D===0?1:2);
+            if(D<0)assert.equal(answer,'Нет действительных корней');
+            if(D>0)assert.notEqual(roots[0],roots[1]);
+            if(D>=0){close(Math.min(...roots),Math.min((-b-Math.sqrt(D))/(2*a),(-b+Math.sqrt(D))/(2*a)),question);close(Math.max(...roots),Math.max((-b-Math.sqrt(D))/(2*a),(-b+Math.sqrt(D))/(2*a)),question);}
           }
         } else checkGeometry(task);
         checked++;

@@ -56,7 +56,7 @@
     <div class="brand" aria-label="Аксиома — математическая доска"><div class="brand-mark">∠</div><div><div class="brand-name">АКСИОМА<span class="brand-dot">.</span></div><div class="brand-subtitle">Математическая доска</div></div></div>
     <div class="header-divider"></div>
     <div class="document-info"><input id="board-title" aria-label="Название доски" title="Нажмите, чтобы переименовать урок" value="Первый урок" maxlength="120"><span id="save-status" class="save-status" role="status">Подготовка доски…</span></div>
-    <div class="header-actions">
+    <div class="header-actions"><button type="button" class="menu-button" data-action="main-menu" aria-label="Меню: доски, файлы, экспорт и инструменты">☰ Меню</button>
       <button type="button" class="button ai-open" data-ai-open="custom" title="ИИ-помощник" aria-controls="ai-drawer" aria-expanded="false"><svg><use href="#i-spark"/></svg><span>ИИ-помощник</span></button>
       <select id="board-list" aria-label="Выбрать доску" title="Мои доски"><option value="">Мои доски</option></select>
       <button type="button" class="icon-button header-new" data-action="new-board" title="Новая доска"><svg><use href="#i-plus"/></svg></button>
@@ -165,7 +165,7 @@
       <section class="generator-section">
         <button type="button" class="generate-tasks-button" data-action="generate-tasks" title="Создать набор заданий по теме и уровню"><span class="generator-icon"><svg><use href="#i-copy"/></svg></span><span><strong>Создать задания</strong><small>По теме и уровню</small></span><svg class="generator-arrow"><use href="#i-arrow"/></svg></button>
       </section>
-      <section class="property-section" id="geometry-section">
+      <section class="property-section" id="geometry-section"><button type="button" class="button" data-action="add-formula">Формула LaTeX</button>
         <div class="section-label">Математика <span class="section-count">6 фигур</span></div>
         <div class="shape-grid">
           <button type="button" data-insert="cube"><svg><use href="#i-cube"/></svg><span>Куб</span></button>
@@ -177,7 +177,7 @@
         </div>
         <label class="section-label graph-label" for="graph-expression">График функции</label>
         <div class="graph-input"><span>y =</span><input id="graph-expression" value="x^2" maxlength="200" spellcheck="false" autocomplete="off" aria-label="Выражение для графика функции"><button type="button" data-action="add-graph" title="Построить график" aria-label="Построить график"><svg><use href="#i-plus"/></svg></button></div>
-        <p class="field-hint">x^2, sin(x), sqrt(x), abs(x)<br>asin(x), acos(x), atan(x), acot(x)</p>
+        <p class="field-hint">x^2, sin(x), sqrt(x), cbrt(x), abs(x)<br>asin(x), acos(x), atan(x), acot(x)</p>
         <p class="field-hint inverse-hint">arcsin, arccos, arctg, arcctg · углы в радианах</p>
         <p class="graph-interaction-hint">Колесо над графиком — масштаб. Углы рамки — размер.</p>
         <button type="button" class="reset-graph-button" data-action="reset-graph-view" title="Выделите график, чтобы вернуть исходный масштаб" disabled><svg><use href="#i-fit"/></svg>Сбросить масштаб графика</button>

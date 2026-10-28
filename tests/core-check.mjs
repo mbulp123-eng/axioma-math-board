@@ -1,9 +1,13 @@
+import {restoreBoards} from '../backup.js';
+import {exportRegion,pngSize,pageTiles} from '../export-plan.js';
+import {validateFormula,prepareFormula,drawFormula,readyFormula} from '../formula.js';
+import {createPointerInput} from '../pointer-input.js';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {drawMathObject,compileExpression,getMathDefaults,normalizeGraphView,zoomGraphAt,resetGraphView,getGraphViewport} from '../math.js';
-import {TASK_TOPICS,generateTasks} from '../tasks.js';
+import {TASK_TOPICS,TASK_LEVELS,generateTasks} from '../tasks.js';
 const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const elements=new Map(),buttons=[],dataStore=new Map();
 let draws=0;
@@ -17,9 +21,9 @@ for(const m of html.matchAll(/\bid="([^"]+)"/g))elements.set(m[1],element(m[1]==
 for(const m of html.matchAll(/<button\b([^>]*)>/g)){const el=element('button');for(const a of m[1].matchAll(/data-([\w-]+)="([^"]+)"/g))el.dataset[a[1]]=a[2];buttons.push(el)}
 elements.get('graph-expression').value='x^2';
 const selectAll=s=>{const m=s.match(/^\[data-([\w-]+)(?:="([^"]+)")?\]$/);return m?buttons.filter(b=>m[1] in b.dataset&&(!m[2]||b.dataset[m[1]]===m[2])):[]};
-const doc={activeElement:null,handlers:{},getElementById:id=>elements.get(id),querySelectorAll:selectAll,querySelector:s=>selectAll(s)[0],createElement:element,addEventListener(k,fn){this.handlers[k]=fn}};
+const doc={body:element('body'),activeElement:null,handlers:{},getElementById:id=>elements.get(id),querySelectorAll:selectAll,querySelector:s=>selectAll(s)[0],createElement:element,addEventListener(k,fn){this.handlers[k]=fn}};
 class FakeImage{constructor(){this.complete=false;this.naturalWidth=100;this.naturalHeight=100}set src(s){this._src=s}get src(){return this._src}async decode(){this.complete=true;return undefined}}
-const sandbox={initAI:()=>({updateSelection(){},hasFocus:()=>false}),console,document:doc,window:{devicePixelRatio:1,matchMedia:()=>({matches:false}),addEventListener(){},open:()=>null},navigator:{clipboard:{writeText:async()=>{}}},crypto:webcrypto,localStorage:{getItem:k=>dataStore.get(k)||null,setItem:(k,v)=>dataStore.set(k,v)},ResizeObserver:class{constructor(cb){this.cb=cb}observe(){this.cb()}},requestAnimationFrame:fn=>fn(),setTimeout:()=>0,clearTimeout(){},Image:FakeImage,Blob,URL,drawMathObject,compileExpression,getMathDefaults,normalizeGraphView,zoomGraphAt,resetGraphView,TASK_TOPICS,generateTasks};
+const sandbox={restoreBoards,exportRegion,pngSize,pageTiles,validateFormula,prepareFormula,drawFormula,readyFormula,createPointerInput,initAI:()=>({updateSelection(){},hasFocus:()=>false}),console,document:doc,window:{devicePixelRatio:1,matchMedia:()=>({matches:false}),addEventListener(){},open:()=>null},navigator:{clipboard:{writeText:async()=>{}}},crypto:webcrypto,localStorage:{getItem:k=>dataStore.get(k)||null,setItem:(k,v)=>dataStore.set(k,v)},ResizeObserver:class{constructor(cb){this.cb=cb}observe(){this.cb()}},requestAnimationFrame:fn=>fn(),setTimeout:()=>0,clearTimeout(){},Image:FakeImage,Blob,URL,drawMathObject,compileExpression,getMathDefaults,normalizeGraphView,zoomGraphAt,resetGraphView,TASK_TOPICS,TASK_LEVELS,generateTasks};
 vm.createContext(sandbox);
 let src=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');src=src.replace(/^import .*?;\n/gm,'').replace('await initStorage();','demo();updateControls();commit();setTool(\'select\');');
 src+='\nglobalThis.test={state,chosen,union,hit,commit,undo,setTool,validateScene,render,persist,scheduleSave,exportCanvas,captureAISelection,insertAIBlocks,images,insertTaskSet,taskGeneratorDialog,setDB:x=>db=x,getDirty:()=>dirty};';
@@ -76,7 +80,7 @@ const slider=elements.get('zoom-slider');slider.value='50';slider.dispatch('inpu
 for(const [formula,x,want] of [['arcsin(x)',.5,Math.PI/6],['arccos(x)',.5,Math.PI/3],['arctg(x)',1,Math.PI/4],['arcctg(x)',-1,3*Math.PI/4]])assert(Math.abs(compileExpression(formula)(x)-want)<1e-12);
 assert(Number.isNaN(compileExpression('asin(x)')(2)));
 const samples=generateTasks({topic:'linear',level:'medium',count:3},()=>.42),beforeTasks=t.state.objects.length;
-t.insertTaskSet(samples,{topic:'linear',level:'medium',count:3,includeAnswers:false});assert.equal(t.state.objects.length,beforeTasks+5);assert(t.state.objects.at(-1).text.includes(samples[2].question));
+t.insertTaskSet(samples,{topic:'linear',level:'medium',count:3,includeAnswers:false});assert.equal(t.state.objects.length,beforeTasks+5);assert(t.state.objects.at(-1).text.replace(/\s+/g,' ').includes(samples[2].question.replace(/\s+/g,' ')));
 t.taskGeneratorDialog();assert(elements.get('modal').open);assert.equal(elements.get('modal-actions').children.length,2);
 console.log('PASS: core logic; right-button pan; gentle board wheel; anchored graph zoom; grouped undo; frame resize; slider; graph view roundtrip; inverse functions; task insertion and dialog.');
 
