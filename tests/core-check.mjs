@@ -99,3 +99,13 @@ t.insertAIBlocks([{text:long}],t.state.id);assert(t.chosen().length>1);assert(t.
 assert.equal(t.validateScene({objects:t.chosen(),title:'AI'}).objects.length,t.chosen().length);
 console.log('PASS: selected-only AI context, editable insertion, separate answer column, single undo, stale-board guard and long-text save/load.');
 
+// Integration: cancel partial touch edits before pinch, erase rollback, lost capture.
+elements.get('modal').close();t.state.objects=[];t.state.view={x:0,y:0,scale:1};t.commit();t.setTool('pen');
+const touch=(id,x=100,y=100)=>({pointerId:id,pointerType:'touch',button:0,clientX:x,clientY:y});
+c.dispatch('pointerdown',touch(10));c.dispatch('pointermove',touch(10,120,120));assert.equal(t.state.objects.length,1);c.dispatch('pointerdown',touch(11,200,200));assert.equal(t.state.objects.length,0,'pinch rolls back draft ink');c.dispatch('pointermove',touch(11,250,250));c.dispatch('pointerup',touch(11));c.dispatch('pointermove',touch(10,130,130));c.dispatch('pointerup',touch(10));assert.equal(t.state.objects.length,0);
+t.state.view={x:0,y:0,scale:1};c.dispatch('pointerdown',touch(12));c.dispatch('pointermove',touch(12,140,140));c.dispatch('pointerup',touch(12));assert.equal(t.state.objects.length,1);t.undo(-1);assert.equal(t.state.objects.length,0);t.undo(1);assert.equal(t.state.objects.length,1);
+t.setTool('eraser');c.dispatch('pointerdown',touch(13,110,110));assert.equal(t.state.objects.length,0);c.dispatch('lostpointercapture',touch(13));assert.equal(t.state.objects.length,1,'canceled eraser restores objects');
+t.setTool('pen');c.dispatch('pointerdown',touch(14,300,300));c.dispatch('pointercancel',touch(14));assert.equal(t.state.objects.length,1);
+const oldScene={format:'axioma',version:1,title:'Старый урок',grid:'axes',objects:[{id:'old',type:'text',x:1,y:2,w:120,h:30,text:String.raw`\frac{1}{2}x`,fontSize:26,color:'#243b43'}]};assert.equal(t.validateScene(oldScene).objects[0].type,'text');assert.equal(t.validateScene(oldScene).objects[0].text,oldScene.objects[0].text);
+const large={...oldScene,objects:Array.from({length:5000},(_,i)=>({...oldScene.objects[0],x:i*2,y:i%30}))};assert.equal(t.validateScene(large).objects.length,5000);assert.throws(()=>t.validateScene({...large,objects:[...large.objects,large.objects[0]]}));
+console.log('PASS: integrated touch drawing/undo, pinch draft rollback, eraser lost-capture rollback, legacy text preservation and 5000-object validation.');
