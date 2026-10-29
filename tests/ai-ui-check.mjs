@@ -32,18 +32,18 @@ function setup(endpoint) {
   ids.get('ai-language').value = 'ru'; ids.get('ai-difficulty').value = 'medium';
   const select = s => buttons.filter(b => s === '[data-ai-open]' ? b.dataset.aiOpen : s === '[data-ai-open="custom"]' ? b.dataset.aiOpen === 'custom' : false);
   document = { activeElement: null, getElementById: id => { assert(ids.has(id), `Missing HTML element ${id}`); return ids.get(id); }, createElement: el, querySelectorAll: select, querySelector: s => select(s)[0] };
-  const calls = [], inserted = []; let boardId = 'board-a', pending = null;
+  const calls = [], inserted = []; let boardId = 'board-a', pending = null, reply = null;const timeouts=[];
   const result = { title: 'Шаг', text: 'Как отменить сложение?', tasks: [], warning: '' };
   const fetch = async (url, options = {}) => {
     if (url.endsWith('/health')) return Response.json({ service: 'axioma-ai', ready: true });
     calls.push(JSON.parse(options.body));
-    if (pending) await pending;
+    if (pending) await Promise.race([pending,new Promise((_,reject)=>options.signal.addEventListener('abort',()=>reject(Object.assign(new Error('aborted'),{name:'AbortError'})),{once:true}))]);if(reply)return reply();
     return Response.json({ result });
   };
-  const sandbox = { document, URL, AbortController, fetch, setTimeout, clearTimeout, AI_ENDPOINT: endpoint, AI_ACTIONS, MAX_IMAGE_CHARS, validateAIRequest, resultBlocks, console };
+  const sandbox = { document, URL, AbortController, fetch, TypeError, setTimeout:(fn,ms)=>{if(ms===90000){timeouts.push(fn);return 0}return setTimeout(fn,ms)}, clearTimeout, AI_ENDPOINT: endpoint, AI_ACTIONS, MAX_IMAGE_CHARS, validateAIRequest, resultBlocks, console };
   vm.createContext(sandbox); vm.runInContext(code, sandbox);
   const api = sandbox.boot({ captureSelection: async () => ({ source: 'x + 2 = 5', image: '', count: 1 }), insertBlocks: (blocks, id) => inserted.push({ blocks, id }), id: () => boardId, render() {} });
-  return { ids, buttons, calls, inserted, api, result, board: id => boardId = id, hold(promise) { pending = promise; } };
+  return { ids, buttons, calls, inserted, api, result, timeout:()=>timeouts.at(-1)(), reply:fn=>reply=fn, board: id => boardId = id, hold(promise) { pending = promise; } };
 }
 const offline = setup('');
 assert(offline.ids.get('ai-run').disabled); assert(offline.ids.get('ai-connection').textContent.includes('ещё не подключён'));
@@ -68,3 +68,14 @@ ui.hold(new Promise(resolve => release = resolve));
 const stale = ui.ids.get('ai-form').fire('submit'); await tick(); ui.board('board-b'); release(); await stale;
 assert(ui.ids.get('ai-result').hidden); assert(ui.ids.get('ai-status').textContent.includes('переключили доску'));
 console.log('PASS: AI UI unconfigured state, explicit-only submission/insertion, editable preview, hint context, cancellation and stale-board handling (DOM logic, no browser layout or live model).');
+
+const failures=setup('https://axioma-ai.example.workers.dev');await tick();await failures.buttons.find(b=>b.dataset.aiOpen==='hint').fire('click');
+assert(failures.ids.get('ai-connection').textContent.includes('ещё не проверен'));
+for(const [reply,message] of [
+ [()=>Response.json({error:'Бесплатная квота исчерпана'},{status:429}),'квота'],
+ [()=>Response.json({result:{title:'x',text:'x',tasks:[null]}}),'неполный'],
+ [()=>new Response('not json'),'нечитаемый'],
+ [()=>{throw new TypeError('network failure')},'Нет связи']
+]){failures.reply(reply);await failures.ids.get('ai-form').fire('submit');assert(failures.ids.get('ai-status').textContent.includes(message));assert(failures.ids.get('ai-result').hidden);assert.equal(failures.inserted.length,0);}
+failures.reply(null);failures.hold(new Promise(()=>{}));const timeoutRequest=failures.ids.get('ai-form').fire('submit');await tick();failures.timeout();await timeoutRequest;assert(failures.ids.get('ai-status').textContent.includes('90 секунд'));assert(!failures.ids.get('ai-fields').disabled);assert(failures.ids.get('ai-result').hidden);
+console.log('PASS: AI UI timeout, network failure, quota and malformed responses; configured handler is not represented as a verified model (mocked transport).');
