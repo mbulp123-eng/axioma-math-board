@@ -4,7 +4,7 @@ export function validateFormula(value){
  const text=String(value||'').trim();
  if(!text||text.length>2000)throw Error('Формула: от 1 до 2000 символов');
  if(/\\(?:href|url|html\w*|style|class|cssId|require|includegraphics|unicode|def|gdef|edef|let|newcommand|renewcommand|newenvironment|verb|bbox)\b/i.test(text)||/[<>\u0000-\u0008]/.test(text))throw Error('Команды ссылок, HTML и определения макросов не поддерживаются');
- let depth=0;for(const c of text){if(c==='{')depth++;if(c==='}')depth--;if(depth<0||depth>40)throw Error('Проверьте вложенность скобок в формуле')}if(depth)throw Error('Не закрыта фигурная скобка');return text;
+ let depth=0;for(let i=0;i<text.length;i++){const c=text[i];if(c==='\\'){i++;continue;}if(c==='{')depth++;if(c==='}')depth--;if(depth<0||depth>40)throw Error('Проверьте вложенность скобок в формуле')}if(depth)throw Error('Не закрыта фигурная скобка');return text;
 }
 async function localBundle(){
  if(!globalThis.DecompressionStream)throw Error('Для формул нужен современный браузер с поддержкой gzip (обновите браузер). Доска продолжает работать.');
