@@ -126,6 +126,16 @@ function polynomial(terms) {
 }
 
 function linear(level, pick) {
+  if(level!=='easy'){
+    const a=signed(pick,9),b=pick(-12,12),root=pick(-9,9),c=pick(1,7),type=pick(0,level==='hard'?4:1);
+    let left,right,answer='x = '+integer(root);
+    if(type===0){left=`${a}(x + (${b}))`;right=String(a*(root+b));}
+    if(type===1){left=polynomial([[a,'x'],[b,'']]);right=polynomial([[a+c,'x'],[b-c*root,'']]);}
+    if(type===2){const d=a*c+1;left=`(${a}x + (${b}))/${c}`;right=`${d}x + (${a*root+b-c*d*root})/${c}`;}
+    if(type>=3){left=`${a}(x + (${b}))`;right=polynomial([[a,'x'],[a*b+(type===3?c:0),'']]);answer=type===3?'Нет решений':'Любое действительное число';}
+    return {question:'Решите уравнение: '+left+' = '+right+'.',answer};
+  }
+
   const a = level === 'easy' ? pick(2, 9) : signed(pick, level === 'hard' ? 20 : 12);
   const x = level === 'easy' ? pick(1, 12) : pick(level === 'hard' ? -20 : -12, level === 'hard' ? 20 : 12);
   const b = level === 'easy' ? pick(1, 20) : pick(level === 'hard' ? -80 : -30, level === 'hard' ? 80 : 30);
@@ -136,6 +146,14 @@ function linear(level, pick) {
 }
 
 function quadratic(level, pick) {
+  if(level!=='easy'){
+    const shift=pick(-9,9),a=level==='hard'?pick(2,5):1,type=pick(0,3);
+    const k=type===0?0:type===1?-pick(1,9):type===2?pick(1,8)**2:[2,3,5,6,7,10,11,13][pick(0,7)];
+    const b=-2*a*shift,c=a*(shift*shift-k);
+    const answer=k<0?'Нет действительных корней':k===0?'x = '+integer(shift):Number.isInteger(Math.sqrt(k))?'x₁ = '+integer(shift-Math.sqrt(k))+'; x₂ = '+integer(shift+Math.sqrt(k)):`x₁ = ${shift} - sqrt(${k}); x₂ = ${shift} + sqrt(${k})`;
+    return {question:'Решите уравнение: '+polynomial([[a,'x²'],[b,'x'],[c,'']])+' = 0.',answer};
+  }
+
   const first = level === 'easy' ? pick(1, 6) : pick(level === 'hard' ? -12 : -9, level === 'hard' ? 12 : 9);
   const second = level === 'easy' ? pick(first + 1, 12) : pick(level === 'hard' ? -12 : -9, level === 'hard' ? 12 : 9);
   const a = level === 'hard' ? signed(pick, 5, 2) : 1;
@@ -228,8 +246,18 @@ export function generateTasks(options = {}, random = Math.random) {
       task = GENERATORS[topic](level, attempt < 20 ? pick : fallback);
       if (!seen.has(task.question)) break;
     }
+    if(seen.has(task.question))throw Error('Не удалось составить набор без повторов. Измените параметры.');
     seen.add(task.question);
     tasks.push(task);
   }
   return tasks;
 }
+
+export const TASK_LEVELS={
+ linear:{easy:'Одно преобразование: ax + b = c, целые ответы.',medium:'Раскрытие скобок или перенос переменной из обеих частей.',hard:'Скобки, дробные коэффициенты, переменная в обеих частях; также нет решений или любое действительное число.'},
+ quadratic:{easy:'Приведённые уравнения с двумя целыми корнями.',medium:'Случаи D > 0, D = 0, D < 0; целые и иррациональные корни.',hard:'Неприведённые уравнения: выделение коэффициентов, все знаки дискриминанта, иррациональные корни.'},
+ arithmetic:{easy:'Одно действие с натуральными числами.',medium:'Действия с положительными и отрицательными числами.',hard:'Несколько действий, скобки и порядок вычислений.'},
+ fractions:{easy:'Сложение и вычитание с общим знаменателем.',medium:'Разные знаменатели, умножение и деление, сокращение.',hard:'Знаки, неправильные дроби, разные знаменатели и сокращение.'},
+ powers:{easy:'Произведение и частное степеней одного основания.',medium:'Также степень степени: различайте сложение и умножение показателей.',hard:'Отрицательные и нулевые показатели, степень степени.'},
+ geometry:{easy:'Площадь и периметр по непосредственно заданным размерам.',medium:'Площадь круга и теорема Пифагора.',hard:'Обратные и составные задачи: найти размер, затем площадь или периметр.'}
+};
