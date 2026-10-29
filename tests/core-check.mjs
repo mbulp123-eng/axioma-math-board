@@ -114,3 +114,8 @@ t.setDB(null);const normalSet=sandbox.localStorage.setItem;sandbox.localStorage.
 console.log('PASS: quota failure retains dirty state and offers file backup; successful retry clears it.');
 t.setTool('pen');const beforeEscape=JSON.stringify(t.state.objects);c.dispatch('pointerdown',touch(19,400,400));doc.handlers.keydown({key:'Escape',preventDefault(){}});assert.equal(JSON.stringify(t.state.objects),beforeEscape);t.undo(-1);t.undo(1);assert.equal(JSON.stringify(t.state.objects),beforeEscape,'Escape must not put canceled ink into redo');
 console.log('PASS: Escape cancels active ink without creating an undo/redo entry.');
+// Export renders selected backgrounds through the same drawing code as the board.
+t.state.objects=[{id:'bg-text',type:'text',x:0,y:0,w:80,h:30,text:'x = 2',fontSize:20,color:'#243b43'}];
+let dots=0,axisLabels=[];const oldArc=context2d.arc,oldText=context2d.fillText;context2d.arc=(...a)=>{dots++;oldArc(...a)};context2d.fillText=(text,...a)=>{axisLabels.push(text);oldText(text,...a)};
+t.state.grid='dots';await t.exportCanvas();assert(dots>0,'dot background exported');dots=0;await t.exportCanvas(t.state.objects,4096,{background:false});assert.equal(dots,0,'explicitly excluded background');t.state.grid='axes';axisLabels=[];await t.exportCanvas();assert(axisLabels.includes('x')&&axisLabels.includes('y'),'background coordinate axes exported');context2d.arc=oldArc;context2d.fillText=oldText;
+console.log('PASS: PNG render path includes dots/coordinate axes by default and respects background opt-out.');
