@@ -28,7 +28,7 @@ export async function prepareFormula(o){
  const task=(async()=>{const mj=await load();const node=mj.tex2svg(latex,{display:true,em:32,ex:16,containerWidth:1200});const svg=node.querySelector('svg');if(!svg||svg.querySelector('[data-mml-node="merror"]'))throw Error('Неизвестная команда LaTeX');
  const values=svg.getAttribute('viewBox').split(/[ ,]+/).map(Number),w=values[2]*.032,h=values[3]*.032;
  if(!Number.isFinite(w+h)||w<=0||h<=0||w>6000||h>3000||svg.querySelectorAll('*').length>12000)throw Error('Формула слишком велика: разделите её на несколько объектов');
- svg.setAttribute('xmlns','http://www.w3.org/2000/svg');svg.setAttribute('width',String(w));svg.setAttribute('height',String(h));svg.style.color=/^#[0-9a-f]{6}$/i.test(o.color)?o.color:'#243b43';
+ svg.setAttribute('xmlns','http://www.w3.org/2000/svg');svg.setAttribute('preserveAspectRatio','none');svg.setAttribute('width',String(w));svg.setAttribute('height',String(h));svg.style.color=/^#[0-9a-f]{6}$/i.test(o.color)?o.color:'#243b43';
  const source=new XMLSerializer().serializeToString(svg),image=new Image();image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(source);await image.decode();return{image,w,h};})();
  cache.set(k,task);if(cache.size>128)cache.delete(cache.keys().next().value);try{return await task}catch(e){cache.delete(k);throw e}
 }
