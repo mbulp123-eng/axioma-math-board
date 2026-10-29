@@ -112,3 +112,5 @@ console.log('PASS: integrated touch drawing/undo, pinch draft rollback, eraser l
 // Storage errors must not clear dirty state or advertise success.
 t.setDB(null);const normalSet=sandbox.localStorage.setItem;sandbox.localStorage.setItem=()=>{throw Error('QuotaExceededError')};t.scheduleSave();await t.persist();assert(t.getDirty());assert(elements.get('save-status').classList.contains('save-error'));assert(!elements.get('save-status').textContent.includes('Сохранено'));sandbox.localStorage.setItem=normalSet;await t.persist();assert(!t.getDirty());
 console.log('PASS: quota failure retains dirty state and offers file backup; successful retry clears it.');
+t.setTool('pen');const beforeEscape=JSON.stringify(t.state.objects);c.dispatch('pointerdown',touch(19,400,400));doc.handlers.keydown({key:'Escape',preventDefault(){}});assert.equal(JSON.stringify(t.state.objects),beforeEscape);t.undo(-1);t.undo(1);assert.equal(JSON.stringify(t.state.objects),beforeEscape,'Escape must not put canceled ink into redo');
+console.log('PASS: Escape cancels active ink without creating an undo/redo entry.');
