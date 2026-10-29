@@ -26,7 +26,7 @@ class FakeImage{constructor(){this.complete=false;this.naturalWidth=100;this.nat
 const sandbox={restoreBoards,exportRegion,pngSize,pageTiles,validateFormula,prepareFormula,drawFormula,readyFormula,createPointerInput,initAI:()=>({updateSelection(){},hasFocus:()=>false}),console,document:doc,window:{devicePixelRatio:1,matchMedia:()=>({matches:false}),addEventListener(){},open:()=>null},navigator:{clipboard:{writeText:async()=>{}}},crypto:webcrypto,localStorage:{getItem:k=>dataStore.get(k)||null,setItem:(k,v)=>dataStore.set(k,v)},ResizeObserver:class{constructor(cb){this.cb=cb}observe(){this.cb()}},requestAnimationFrame:fn=>fn(),setTimeout:()=>0,clearTimeout(){},Image:FakeImage,Blob,URL,drawMathObject,compileExpression,getMathDefaults,normalizeGraphView,zoomGraphAt,resetGraphView,TASK_TOPICS,TASK_LEVELS,generateTasks};
 vm.createContext(sandbox);
 let src=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');src=src.replace(/^import .*?;\n/gm,'').replace('await initStorage();','demo();updateControls();commit();setTool(\'select\');');
-src+='\nglobalThis.test={state,chosen,union,hit,commit,undo,setTool,validateScene,render,persist,scheduleSave,exportCanvas,captureAISelection,insertAIBlocks,images,insertTaskSet,taskGeneratorDialog,setDB:x=>db=x,getDirty:()=>dirty};';
+src+='\nglobalThis.test={restoreAll,scene,getBoards:()=>boards,state,chosen,union,hit,commit,undo,setTool,validateScene,render,persist,scheduleSave,exportCanvas,captureAISelection,insertAIBlocks,images,insertTaskSet,taskGeneratorDialog,setDB:x=>db=x,getDirty:()=>dirty};';
 vm.runInContext(src,sandbox);
 const t=sandbox.test,c=elements.get('board-canvas');
 assert(t.state.objects.length>10);t.render();
@@ -119,3 +119,6 @@ t.state.objects=[{id:'bg-text',type:'text',x:0,y:0,w:80,h:30,text:'x = 2',fontSi
 let dots=0,axisLabels=[];const oldArc=context2d.arc,oldText=context2d.fillText;context2d.arc=(...a)=>{dots++;oldArc(...a)};context2d.fillText=(text,...a)=>{axisLabels.push(text);oldText(text,...a)};
 t.state.grid='dots';await t.exportCanvas();assert(dots>0,'dot background exported');dots=0;await t.exportCanvas(t.state.objects,4096,{background:false});assert.equal(dots,0,'explicitly excluded background');t.state.grid='axes';axisLabels=[];await t.exportCanvas();assert(axisLabels.includes('x')&&axisLabels.includes('y'),'background coordinate axes exported');context2d.arc=oldArc;context2d.fillText=oldText;
 console.log('PASS: PNG render path includes dots/coordinate axes by default and respects background opt-out.');
+
+await t.persist();for(const id of ['backup-extra-1','backup-extra-2'])t.getBoards().set(id,{...JSON.parse(JSON.stringify(t.scene())),id});const archive={format:'axioma-backup',version:1,boards:[...t.getBoards().values()]};const preservedIds=[...t.getBoards().keys()];await t.restoreAll({size:1000,text:async()=>JSON.stringify(archive)});assert(elements.get('toast').textContent.includes('Восстановлено досок:'),elements.get('toast').textContent);assert.equal(t.getBoards().size,preservedIds.length*2);assert(preservedIds.every(id=>t.getBoards().has(id)));
+console.log('PASS: integrated all-board restore adds copies and preserves existing board IDs.');
